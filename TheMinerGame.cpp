@@ -5,9 +5,9 @@
 #include <string.h>
 #include <cstdio>
 
-using std::cout;
-using std::cin;
-using std::endl;
+using std::cout,
+std::cin,
+std::endl;
 
 const int SIZE {5};
 const int MINES {5};
