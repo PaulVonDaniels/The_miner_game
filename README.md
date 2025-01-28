@@ -18,7 +18,9 @@ A simple console implementation of the classic C++ Minesweeper game. The goal of
 3. If you open a cell with a mine, the game ends.
 4. If you open all the cells without mines, you win.
 ----------------------------------------------------------------------------------------------------------
+
 Перевод на русский
+
 ----------------------------------------------------------------------------------------------------------
 # Игра Minesweeper
 
