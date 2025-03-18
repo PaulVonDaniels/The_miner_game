@@ -1,82 +1,202 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <vector>
+#include <string>
+#include <iomanip>
 
-#include <string.h>
-#include <cstdio>
+using namespace std;
 
-using std::cout,
-std::cin,
-std::endl;
+const int SIZE = 5;
+const int MINES = 5;
 
-const int SIZE {5};
-const int MINES {5};
+vector<vector<char>> board(SIZE, vector<char>(SIZE, '.'));
+vector<vector<bool>> revealed(SIZE, vector<bool>(SIZE, false));
+vector<vector<bool>> flagged(SIZE, vector<bool>(SIZE, false));
 
-char board[SIZE][SIZE];
-bool revealed[SIZE][SIZE] = {false};
+void clearScreen()
+{
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
 
-void initBoard() {
-    for (int i = 0; i < SIZE; ++i) 
-        for (int j = 0; j < SIZE; ++j) 
+void initBoard()
+{
+    for (int i = 0; i < SIZE; ++i)
+    {
+        for (int j = 0; j < SIZE; ++j)
+        {
             board[i][j] = '.';
+        }
+    }
 
     int minesPlaced = 0;
-    while (minesPlaced < MINES) {
+    while (minesPlaced < MINES)
+    {
         int x = rand() % SIZE;
         int y = rand() % SIZE;
-        if (board[x][y] != '*') {
+        if (board[x][y] != '*')
+        {
             board[x][y] = '*';
             minesPlaced++;
         }
     }
 }
 
-void displayBoard() {
-    for (int i = 0; i < SIZE; ++i) {
-        for (int j = 0; j < SIZE; ++j) {
-            if (revealed[i][j]) printf("%c ", board[i][j]);
-            else printf(". ");
+int countMinesAround(int x, int y)
+{
+    int count = 0;
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && board[nx][ny] == '*')
+            {
+                count++;
+            }
         }
-        printf("\n");
+    }
+    return count;
+}
+
+void displayBoard()
+{
+    clearScreen();
+    cout << "   ";
+    for (int i = 0; i < SIZE; ++i)
+    {
+        cout << setw(2) << i;
+    }
+    cout << endl;
+
+    for (int i = 0; i < SIZE; ++i)
+    {
+        cout << setw(2) << i << " ";
+        for (int j = 0; j < SIZE; ++j)
+        {
+            if (revealed[i][j])
+            {
+                if (board[i][j] == '*')
+                {
+                    cout << "* ";
+                }
+                else
+                {
+                    int minesAround = countMinesAround(i, j);
+                    cout << (minesAround > 0 ? to_string(minesAround) : " ") << " ";
+                }
+            }
+            else if (flagged[i][j])
+            {
+                cout << "F ";
+            }
+            else
+            {
+                cout << ". ";
+            }
+        }
+        cout << endl;
     }
 }
 
-int main() {
+bool checkWin()
+{
+    for (int i = 0; i < SIZE; ++i)
+    {
+        for (int j = 0; j < SIZE; ++j)
+        {
+            if (board[i][j] != '*' && !revealed[i][j])
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void revealEmptyCells(int x, int y)
+{
+    if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || revealed[x][y])
+    {
+        return;
+    }
+
+    revealed[x][y] = true;
+
+    if (countMinesAround(x, y) == 0)
+    {
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            for (int dy = -1; dy <= 1; ++dy)
+            {
+                revealEmptyCells(x + dx, y + dy);
+            }
+        }
+    }
+}
+
+int main()
+{
     srand(time(0));
     initBoard();
 
     int x, y;
-    while (true) {
-        displayBoard();
-        printf("Enter the coordinates (x y): ");
-        scanf("%d %d", &x, &y);
+    char action;
+    bool gameOver = false;
 
-        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
-            puts("Incorrect coordinates! Try again.");
+    while (!gameOver)
+    {
+        displayBoard();
+        cout << "Введите действие (r - открыть, f - флаг): ";
+        cin >> action;
+        cout << "Введите координаты (x y): ";
+        cin >> x >> y;
+
+        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
+        {
+            cout << "Некорректные координаты! Попробуйте снова." << endl;
             continue;
         }
 
-        if (board[x][y] == '*') {
-            puts("You've stepped on a landmine! The game is over.");
-            revealed[x][y] = true;
-            displayBoard();
-            break;
-        }
+        if (action == 'r')
+        {
+            if (flagged[x][y])
+            {
+                cout << "Эта клетка помечена флагом! Сначала уберите флаг." << endl;
+                continue;
+            }
 
-        revealed[x][y] = true;
-        board[x][y] = ' ';
-
-        bool win = true;
-        for (int i = 0; i < SIZE; ++i) {
-            for (int j = 0; j < SIZE; ++j) {
-                if (board[i][j] != '*' && !revealed[i][j]) {
-                    win = false;
-                    break;
+            if (board[x][y] == '*')
+            {
+                cout << "Вы наступили на мину! Игра окончена." << endl;
+                revealed[x][y] = true;
+                displayBoard();
+                gameOver = true;
+            }
+            else
+            {
+                revealEmptyCells(x, y);
+                if (checkWin())
+                {
+                    cout << "Поздравляем! Вы выиграли!" << endl;
+                    displayBoard();
+                    gameOver = true;
                 }
             }
-            if (!win) break;
         }
-        if (win) {puts("Congratulations! You've won!"); displayBoard(); break;}
+        else if (action == 'f')
+        {
+            flagged[x][y] = !flagged[x][y];
+        }
+        else
+        {
+            cout << "Некорректное действие! Используйте 'r' для открытия или 'f' для установки флага." << endl;
+        }
     }
 
     return 0;
