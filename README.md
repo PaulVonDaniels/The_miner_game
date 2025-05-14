@@ -16,5 +16,5 @@ This is a simple implementation of the classic Minesweeper game in C++. The game
 
 1. **Reveal a Cell**: Enter `r` (reveal) and the cell coordinates (x y) to reveal it.
 2. **Flag a Cell**: Enter `f` (flag) and the cell coordinates (x y) to toggle a flag on the cell.
-3. **Objective**: Reveal all cells without hitting a mine.
+3. **Objective**: Reveal all cells without hitting a mine
 
